@@ -1,18 +1,18 @@
 import React from 'react';
-import { 
-  MapPin, 
-  Briefcase, 
-  Target, 
-  Award, 
-  Lightbulb, 
-  Heart, 
+import {
+  MapPin,
+  Briefcase,
+  Target,
+  Award,
+  Lightbulb,
+  Heart,
   Quote,
   User,
   Calendar,
   Globe
 } from 'lucide-react';
 
-const PersonalCard = ({ data }) => {
+const PersonalCard = React.forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const {
@@ -39,7 +39,11 @@ const PersonalCard = ({ data }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-2xl max-w-md mx-auto overflow-hidden print:shadow-none print:max-w-full">
+    <div
+      ref={ref}
+      data-testid="vibecard-capture"
+      className="bg-white rounded-xl shadow-2xl max-w-md mx-auto overflow-hidden print:shadow-none print:max-w-full"
+    >
       {/* 头部信息 */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
         <div className="flex items-center space-x-4">
@@ -165,6 +169,8 @@ const PersonalCard = ({ data }) => {
       </div>
     </div>
   );
-};
+});
+
+PersonalCard.displayName = 'PersonalCard';
 
 export default PersonalCard;

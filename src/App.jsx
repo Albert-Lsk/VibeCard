@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { toPng } from 'html-to-image';
 import FileUpload from './components/FileUpload';
 import PersonalCard from './components/PersonalCard';
 import InfoForm from './components/InfoForm';
 import ErrorBoundary from './components/ErrorBoundary';
 import DemoShowcase from './components/DemoShowcase';
+import { generateCardFilename } from './lib/utils';
 
 const AppContent = () => {
   const [cardData, setCardData] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [showDemo, setShowDemo] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const cardRef = useRef(null);
 
   const handleFileUpload = (file, content) => {
     setCurrentStep(2);
@@ -53,6 +57,33 @@ const AppContent = () => {
       hobbies: ["📚 阅读", "🏃 跑步", "🎸 吉他", "✈️ 旅行"],
       motto: "持续学习，创造价值"
     };
+  };
+
+  const handleExportPNG = async () => {
+    if (!cardRef.current || !cardData) return;
+
+    setIsExporting(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: Math.max(2, window.devicePixelRatio || 1),
+        backgroundColor: '#fff',
+        style: {
+          // Add some padding to prevent clipping of shadows
+          padding: '20px',
+          boxSizing: 'content-box',
+        },
+      });
+
+      const link = document.createElement('a');
+      link.download = generateCardFilename(cardData.name);
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Failed to export PNG:', error);
+      alert('导出失败，请重试');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const steps = [
@@ -181,7 +212,7 @@ const AppContent = () => {
                 {currentStep === 3 && cardData && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
-                      <PersonalCard data={cardData} />
+                      <PersonalCard ref={cardRef} data={cardData} />
                     </div>
                     <div className="flex flex-col space-y-4">
                       <button
@@ -196,14 +227,26 @@ const AppContent = () => {
                         </span>
                       </button>
                       <button
-                        onClick={() => window.print()}
-                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/25 font-semibold"
+                        onClick={handleExportPNG}
+                        disabled={isExporting}
+                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/25 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
                         <span className="flex items-center justify-center space-x-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span>下载名片</span>
+                          {isExporting ? (
+                            <>
+                              <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span>导出中...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span>下载名片</span>
+                            </>
+                          )}
                         </span>
                       </button>
                     </div>
